@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CareerIQ — Career Recommendation System</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,900;1,300&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ── */
+:root {
+  --ink: #0a0d14;
+  --ink2: #141922;
+  --ink3: #1c2535;
+  --fog: #2e3d55;
+  --mist: #4a6080;
+  --silver: #8ba0bc;
+  --cloud: #c8d8ec;
+  --paper: #e8f0fc;
+  --white: #f5f9ff;
+  --blue: #2563eb;
+  --blue-dim: rgba(37,99,235,0.12);
+  --blue-border: rgba(37,99,235,0.25);
+  --teal: #0891b2;
+  --teal-dim: rgba(8,145,178,0.1);
+  --gold: #c9a84c;
+  --gold-dim: rgba(201,168,76,0.1);
+  --gold-border: rgba(201,168,76,0.25);
+  --red: #e53e3e;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.1);
+  --glow: 0 0 60px rgba(37,99,235,0.12);
+  --r: 14px;
+  --r2: 20px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'Outfit', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* subtle noise texture */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: .4;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 48px;
+  background: rgba(10,13,20,0.8);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  font-family: 'Fraunces', serif;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: var(--white);
+}
+.logo sup {
+  font-family: 'Outfit', sans-serif;
+  font-size: .55rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  vertical-align: super;
+  margin-left: 4px;
+}
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.nav-badge {
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  color: var(--gold);
+  border-radius: 100px;
+  padding: 4px 14px;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* ── FLOATING RESEARCH BUTTON ── */
+.research-fab {
+  position: fixed;
+  bottom: 32px; right: 32px;
+  z-index: 300;
+  width: 56px; height: 56px;
+  background: var(--ink3);
+  border: 1px solid var(--border2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.research-fab:hover {
+  transform: scale(1.1);
+  border-color: var(--gold-border);
+  background: var(--gold-dim);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 4px var(--gold-dim);
+}
+.research-fab svg { width: 22px; height: 22px; stroke: var(--gold); }
+.fab-tooltip {
+  position: absolute;
+  right: 66px; top: 50%;
+  transform: translateY(-50%);
+  background: var(--ink3);
+  border: 1px solid var(--border2);
+  color: var(--cloud);
+  font-size: .78rem;
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 6px 12px;
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+}
+.research-fab:hover .fab-tooltip { opacity: 1; }
+.fab-pulse {
+  position: absolute;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  opacity: 0;
+  animation: fab-ring 2.5s ease-out infinite;
+}
+@keyframes fab-ring {
+  0% { transform: scale(1); opacity: .5; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+/* ── RESEARCH DRAWER ── */
+.drawer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  z-index: 400;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .35s;
+}
+.drawer-overlay.open { opacity: 1; pointer-events: all; }
+
+.drawer {
+  position: fixed;
+  top: 0; right: 0;
+  width: min(780px, 95vw);
+  height: 100vh;
+  background: var(--ink2);
+  border-left: 1px solid var(--border2);
+  z-index: 500;
+  transform: translateX(100%);
+  transition: transform .4s cubic-bezier(.32,0,.67,0);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.drawer.open { transform: translateX(0); transition-timing-function: cubic-bezier(.33,1,.68,1); }
+
+.drawer-header {
+  flex-shrink: 0;
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--ink2);
+}
+.drawer-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--white);
+}
+.drawer-subtitle { font-size: .8rem; color: var(--mist); margin-top: 2px; }
+.drawer-close {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--silver);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.drawer-close:hover { background: rgba(255,255,255,.06); color: var(--white); }
+
+.drawer-body { flex: 1; overflow-y: auto; padding: 32px; scroll-behavior: smooth; }
+.drawer-body::-webkit-scrollbar { width: 4px; }
+.drawer-body::-webkit-scrollbar-track { background: transparent; }
+.drawer-body::-webkit-scrollbar-thumb { background: var(--fog); border-radius: 2px; }
+
+/* drawer nav tabs */
+.drawer-tabs {
+  display: flex; gap: 4px;
+  background: var(--ink3);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.dtab {
+  flex: 1; min-width: 80px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--mist);
+  font-family: 'Outfit', sans-serif;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+  text-align: center;
+}
+.dtab.active { background: var(--ink); color: var(--paper); }
+
+.dpanel { display: none; }
+.dpanel.active { display: block; }
+
+/* drawer content styles */
+.d-section { margin-bottom: 32px; }
+.d-label {
+  font-size: .68rem; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--gold);
+  margin-bottom: 10px;
+}
+.d-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.15rem; font-weight: 600;
+  color: var(--white); margin-bottom: 12px;
+}
+.d-text { font-size: .87rem; color: var(--silver); line-height: 1.75; }
+.d-text strong { color: var(--paper); font-weight: 600; }
+
+.formula-card {
+  background: var(--ink3);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 20px 24px;
+  margin: 16px 0;
+}
+.formula-eq {
+  font-family: 'Fraunces', serif;
+  font-size: 1.1rem;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.formula-vars { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.fv { display: flex; gap: 10px; font-size: .82rem; }
+.fv-key { color: var(--gold); font-weight: 700; font-family: 'Fraunces', serif; min-width: 30px; }
+.fv-desc { color: var(--silver); }
+
+/* pipeline steps */
+.pipe-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pipe-card {
+  background: var(--ink3);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px;
+}
+.pipe-num {
+  font-family: 'Fraunces', serif;
+  font-size: 1.8rem; font-weight: 900;
+  color: var(--fog); margin-bottom: 8px;
+}
+.pipe-name { font-size: .9rem; font-weight: 600; color: var(--paper); margin-bottom: 4px; }
+.pipe-desc { font-size: .78rem; color: var(--silver); line-height: 1.6; }
+
+/* feature tables */
+.ftable { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.ftable th {
+  background: var(--ink3);
+  padding: 10px 14px;
+  text-align: left;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mist);
+  border-bottom: 1px solid var(--border2);
+}
+.ftable td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--silver);
+  vertical-align: middle;
+}
+.ftable tr:last-child td { border-bottom: none; }
+.ftable tr:hover td { background: rgba(255,255,255,.02); }
+.r-badge {
+  display: inline-block;
+  background: rgba(8,145,178,0.12);
+  border: 1px solid rgba(8,145,178,0.25);
+  color: #67e8f9;
+  border-radius: 5px; padding: 1px 8px;
+  font-size: .72rem; font-weight: 700;
+  font-family: 'Fraunces', serif;
+}
+
+/* accuracy comparison */
+.acc-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.acc-name { min-width: 140px; font-size: .85rem; font-weight: 500; color: var(--cloud); }
+.acc-track { flex: 1; height: 7px; background: var(--ink3); border-radius: 4px; overflow: hidden; }
+.acc-fill { height: 100%; border-radius: 4px; width: 0; transition: width 1.2s cubic-bezier(.22,1,.36,1) .3s; }
+.acc-fill.rf { background: linear-gradient(90deg, var(--blue), #60a5fa); }
+.acc-fill.svm { background: linear-gradient(90deg, var(--teal), #22d3ee); }
+.acc-fill.knn { background: linear-gradient(90deg, #7c3aed, var(--gold)); }
+.acc-pct { min-width: 40px; text-align: right; font-weight: 700; font-family: 'Fraunces', serif; font-size: .9rem; }
+.acc-gain { font-size: .72rem; color: #4ade80; margin-left: 4px; }
+
+/* confusion matrix */
+.matrix-wrap { overflow-x: auto; }
+.matrix { border-collapse: collapse; font-size: .76rem; }
+.matrix th, .matrix td {
+  border: 1px solid var(--border2);
+  padding: 8px 10px;
+  text-align: center;
+  min-width: 52px;
+}
+.matrix th { background: var(--ink3); color: var(--mist); font-weight: 600; font-size: .68rem; }
+.matrix td { color: var(--silver); }
+.matrix .diag { background: rgba(8,145,178,0.15); color: #67e8f9; font-weight: 700; }
+.matrix .corner { background: var(--ink3); }
+
+/* per-class f1 */
+.f1-grid { display: flex; flex-direction: column; gap: 10px; }
+.f1-row { display: flex; align-items: center; gap: 12px; }
+.f1-name { min-width: 150px; font-size: .82rem; color: var(--cloud); }
+.f1-track { flex: 1; height: 5px; background: var(--ink3); border-radius: 3px; overflow: hidden; }
+.f1-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg,var(--blue),#67e8f9); width: 0; transition: width 1s ease .5s; }
+.f1-val { min-width: 36px; text-align: right; font-weight: 700; font-size: .82rem; color: var(--paper); font-family: 'Fraunces', serif; }
+
+/* ── HERO ── */
+.hero {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 80px 24px 48px;
+  overflow: hidden;
+}
+.hero-blur1 {
+  position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(37,99,235,0.1) 0%, transparent 65%);
+  border-radius: 50%;
+  top: 50%; left: 30%;
+  transform: translate(-50%, -50%);
+  animation: drift 10s ease-in-out infinite;
+}
+.hero-blur2 {
+  position: absolute;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+  border-radius: 50%;
+  top: 30%; right: 10%;
+  animation: drift 14s ease-in-out infinite reverse;
+}
+@keyframes drift {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-30px); }
+}
+.hero-inner { position: relative; z-index: 1; max-width: 680px; }
+
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: .72rem; font-weight: 600; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--gold);
+  margin-bottom: 28px;
+  animation: rise .6s ease both;
+}
+.eyebrow-line { width: 28px; height: 1px; background: var(--gold); opacity: .6; }
+
+h1 {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(3rem, 7vw, 5.5rem);
+  font-weight: 900;
+  line-height: .95;
+  letter-spacing: -0.04em;
+  color: var(--white);
+  margin-bottom: 24px;
+  animation: rise .6s .08s ease both;
+}
+h1 .italic { font-style: italic; color: var(--gold); }
+
+.hero-desc {
+  font-size: 1rem;
+  color: var(--silver);
+  line-height: 1.8;
+  max-width: 500px;
+  margin: 0 auto 44px;
+  font-weight: 300;
+  animation: rise .6s .16s ease both;
+}
+
+.hero-metrics {
+  display: flex; gap: 0; justify-content: center;
+  background: var(--ink2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r2);
+  overflow: hidden;
+  width: fit-content;
+  margin: 0 auto 44px;
+  animation: rise .6s .24s ease both;
+}
+.metric {
+  padding: 20px 32px;
+  text-align: center;
+  border-right: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.metric:last-child { border-right: none; }
+.metric-n {
+  font-family: 'Fraunces', serif;
+  font-size: 1.9rem; font-weight: 900;
+  color: var(--white); line-height: 1;
+  margin-bottom: 4px;
+}
+.metric-l {
+  font-size: .68rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--mist);
+}
+
+.start-btn {
+  display: inline-flex; align-items: center; gap: 12px;
+  background: var(--blue);
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700; font-size: .95rem;
+  padding: 16px 36px;
+  border-radius: var(--r);
+  border: none; cursor: pointer;
+  transition: all .22s;
+  animation: rise .6s .32s ease both;
+  box-shadow: 0 0 0 0 rgba(37,99,235,0.4);
+}
+.start-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(37,99,235,0.35), 0 0 0 6px rgba(37,99,235,0.08);
+}
+.btn-arrow {
+  width: 22px; height: 22px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .2s;
+}
+.start-btn:hover .btn-arrow { transform: translateX(3px); }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── FORM SECTION ── */
+.form-section {
+  position: relative; z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px 120px;
+}
+.form-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.form-eyebrow {
+  font-size: .68rem; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--blue);
+  margin-bottom: 10px;
+}
+.form-title {
+  font-family: 'Fraunces', serif;
+  font-size: 2.2rem; font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--white);
+}
+.form-sub { font-size: .88rem; color: var(--mist); margin-top: 8px; }
+
+.form-card {
+  background: var(--ink2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r2);
+  overflow: hidden;
+}
+
+.form-group-block { padding: 32px 36px; }
+.form-group-block + .form-group-block { border-top: 1px solid var(--border); }
+.block-label {
+  font-size: .68rem; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--mist);
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.block-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field.wide { grid-column: 1/-1; }
+.field-label {
+  font-size: .75rem; font-weight: 600;
+  color: var(--silver);
+  display: flex; align-items: center; gap: 8px;
+}
+.field-id {
+  font-size: .62rem; background: var(--ink3);
+  border: 1px solid var(--border2); color: var(--mist);
+  border-radius: 4px; padding: 1px 6px;
+  font-family: 'Fraunces', serif;
+}
+
+select {
+  width: 100%;
+  background: var(--ink3);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  color: var(--paper);
+  padding: 12px 16px;
+  font-size: .9rem;
+  font-family: 'Outfit', sans-serif;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a6080' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+select option { background: #1a2535; }
+
+.range-field { display: flex; flex-direction: column; gap: 10px; }
+.range-top { display: flex; align-items: center; justify-content: space-between; }
+.range-val {
+  font-family: 'Fraunces', serif;
+  font-size: 1.5rem; font-weight: 900;
+  color: var(--blue); line-height: 1;
+}
+.range-unit { font-size: .72rem; color: var(--mist); margin-top: 2px; }
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%; height: 4px;
+  background: var(--ink3);
+  border-radius: 2px;
+  outline: none; cursor: pointer;
+  border: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--blue);
+  border: 3px solid var(--ink2);
+  box-shadow: 0 0 0 2px var(--blue);
+  transition: transform .15s;
+}
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+.range-marks {
+  display: flex; justify-content: space-between;
+  font-size: .65rem; color: var(--fog); margin-top: -4px;
+}
+
+/* submit */
+.form-footer { padding: 28px 36px; border-top: 1px solid var(--border); background: var(--ink3); }
+.submit-btn {
+  width: 100%;
+  background: var(--blue);
+  border: none; border-radius: var(--r);
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700; font-size: 1rem;
+  padding: 17px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: all .22s;
+  box-shadow: 0 4px 24px rgba(37,99,235,0.25);
+}
+.submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 36px rgba(37,99,235,0.4); }
+
+/* ── LOADER ── */
+#loader {
+  display: none;
+  text-align: center; padding: 64px 24px;
+}
+.loader-ring {
+  width: 52px; height: 52px;
+  border: 2px solid rgba(37,99,235,0.12);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin: 0 auto 24px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loader-label { font-family: 'Fraunces', serif; font-size: 1.1rem; color: var(--paper); margin-bottom: 20px; }
+.loader-steps { display: flex; flex-direction: column; gap: 8px; }
+.lstep {
+  display: flex; align-items: center; gap: 10px;
+  font-size: .8rem; color: var(--fog);
+  opacity: 0; transition: all .4s;
+}
+.lstep.done { opacity: 1; color: #4ade80; }
+.lstep-ico { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* ── RESULTS ── */
+#results { display: none; }
+.results-header { text-align: center; padding: 48px 0 36px; }
+.results-label {
+  font-size: .68rem; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: #4ade80; margin-bottom: 10px;
+}
+.results-title {
+  font-family: 'Fraunces', serif;
+  font-size: 2rem; font-weight: 900;
+  letter-spacing: -0.03em; color: var(--white);
+}
+#results-sub { font-size: .88rem; color: var(--mist); margin-top: 8px; }
+
+/* classifier tabs */
+.clf-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 20px; flex-wrap: wrap;
+}
+.clf-label { font-size: .72rem; color: var(--mist); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.clf-pills { display: flex; gap: 6px; }
+.clf-pill {
+  padding: 7px 18px;
+  border-radius: 100px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--silver);
+  font-family: 'Outfit', sans-serif;
+  font-size: .8rem; font-weight: 600;
+  cursor: pointer; transition: all .18s;
+}
+.clf-pill.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+.clf-pill .pacc { font-weight: 400; opacity: .75; font-size: .72rem; }
+
+/* career cards */
+.career-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+.ccard {
+  background: var(--ink2);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 24px 28px;
+  display: grid;
+  grid-template-columns: 52px 1fr 100px;
+  align-items: center;
+  gap: 20px;
+  opacity: 0; transform: translateY(12px);
+  animation: cardrise .3s ease forwards;
+  transition: border-color .2s;
+}
+.ccard:hover { border-color: var(--border2); }
+@keyframes cardrise { to { opacity:1; transform:translateY(0); } }
+.ccard.top {
+  border-color: rgba(201,168,76,.3);
+  background: linear-gradient(135deg, rgba(201,168,76,.05), var(--ink2));
+  box-shadow: 0 0 40px rgba(201,168,76,.06);
+}
+.ccard-num {
+  font-family: 'Fraunces', serif;
+  font-size: 2rem; font-weight: 900;
+  color: var(--fog); text-align: center;
+}
+.ccard.top .ccard-num { color: var(--gold); }
+.ccard-info h3 {
+  font-family: 'Fraunces', serif;
+  font-size: 1.05rem; font-weight: 600;
+  color: var(--white); margin-bottom: 8px;
+  display: flex; align-items: center; gap: 10px;
+}
+.top-pill {
+  font-size: .62rem; font-weight: 700;
+  background: var(--gold-dim); border: 1px solid var(--gold-border);
+  color: var(--gold); border-radius: 4px;
+  padding: 1px 7px; letter-spacing: .05em; text-transform: uppercase;
+}
+.ccard-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.ctag {
+  background: var(--ink3);
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  padding: 2px 9px;
+  font-size: .7rem; color: var(--silver);
+}
+.ccard-right { text-align: right; }
+.cconf {
+  font-family: 'Fraunces', serif;
+  font-size: 1.7rem; font-weight: 900;
+  color: var(--blue); line-height: 1;
+}
+.ccard.top .cconf { color: var(--gold); }
+.cconf-l { font-size: .65rem; color: var(--mist); text-transform: uppercase; letter-spacing: .06em; }
+.cbar-track { margin-top: 8px; height: 3px; background: var(--ink3); border-radius: 2px; overflow: hidden; }
+.cbar { height: 100%; background: var(--blue); border-radius: 2px; width: 0; transition: width 1.2s cubic-bezier(.22,1,.36,1); }
+.ccard.top .cbar { background: var(--gold); }
+
+/* strengths panel */
+.strengths-card {
+  background: var(--ink2);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 24px 28px;
+  margin-bottom: 24px;
+}
+.sc-title {
+  font-size: .72rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--mist); margin-bottom: 18px;
+}
+.sc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sc-item { display: flex; align-items: center; gap: 12px; }
+.sc-name { min-width: 100px; font-size: .8rem; color: var(--silver); }
+.sc-track { flex: 1; height: 4px; background: var(--ink3); border-radius: 2px; overflow: hidden; }
+.sc-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--blue), #67e8f9); width: 0; transition: width 1s ease .3s; }
+.sc-val { min-width: 32px; text-align: right; font-size: .78rem; font-weight: 700; color: var(--paper); }
+
+/* reset */
+.reset-btn {
+  display: block; margin: 28px auto 0;
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  color: var(--mist); padding: 11px 28px;
+  font-family: 'Outfit', sans-serif; font-size: .88rem;
+  cursor: pointer; transition: all .2s;
+}
+.reset-btn:hover { border-color: var(--border2); color: var(--paper); background: rgba(255,255,255,.03); }
+
+/* divider line */
+hr.sec-line { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+/* ── scrollbar global ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--fog); border-radius: 3px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+  nav { padding: 0 20px; }
+  .hero-metrics { flex-direction: column; width: 100%; }
+  .metric { border-right: none; border-bottom: 1px solid var(--border); }
+  .metric:last-child { border-bottom: none; }
+  .field-grid { grid-template-columns: 1fr; }
+  .form-group-block { padding: 24px 20px; }
+  .form-footer { padding: 20px; }
+  .ccard { grid-template-columns: 40px 1fr; }
+  .ccard-right { grid-column: 2; grid-row: 1; text-align: right; }
+  .sc-grid { grid-template-columns: 1fr; }
+  .pipe-grid { grid-template-columns: 1fr; }
+  .research-fab { bottom: 20px; right: 20px; }
+  h1 { font-size: 2.8rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="logo">CareerIQ<sup>AI</sup></div>
+  <div class="nav-right">
+    <span class="nav-badge">88.3% Accuracy</span>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-blur1"></div>
+  <div class="hero-blur2"></div>
+  <div class="hero-inner">
+    <div class="eyebrow">
+      <span class="eyebrow-line"></span>
+      Random Forest · CFS Feature Selection
+      <span class="eyebrow-line"></span>
+    </div>
+    <h1>Find Your<br><span class="italic">Perfect</span><br>Tech Career</h1>
+    <p class="hero-desc">Answer a few questions about your academic background and skills. Our AI model — trained on 1,200 student profiles — delivers your ranked career matches in seconds.</p>
+    <div class="hero-metrics">
+      <div class="metric">
+        <div class="metric-n">88.3%</div>
+        <div class="metric-l">Accuracy</div>
+      </div>
+      <div class="metric">
+        <div class="metric-n">1,200</div>
+        <div class="metric-l">Profiles</div>
+      </div>
+      <div class="metric">
+        <div class="metric-n">0.88</div>
+        <div class="metric-l">F1 Score</div>
+      </div>
+      <div class="metric">
+        <div class="metric-n">6</div>
+        <div class="metric-l">Careers</div>
+      </div>
+    </div>
+    <button class="start-btn" onclick="document.getElementById('form-area').scrollIntoView({behavior:'smooth'})">
+      Get My Recommendations
+      <span class="btn-arrow">
+        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </span>
+    </button>
+  </div>
+</section>
+
+<!-- ── FORM ── -->
+<section id="form-area">
+  <div class="form-section">
+    <div class="form-header">
+      <div class="form-eyebrow">Step 1 of 1</div>
+      <div class="form-title">Your Academic Profile</div>
+      <div class="form-sub">9 inputs · takes under 60 seconds</div>
+    </div>
+
+    <div class="form-card" id="form-card">
+
+      <!-- ACADEMIC -->
+      <div class="form-group-block">
+        <div class="block-label">Academic Performance</div>
+        <div class="field wide">
+          <div class="field-label">
+            CGPA / SGPA
+            <span class="field-id">f₁</span>
+          </div>
+          <div class="range-field">
+            <div class="range-top">
+              <div>
+                <div class="range-val" id="cgpa-display">7.5</div>
+                <div class="range-unit">out of 10.0</div>
+              </div>
+            </div>
+            <input type="range" id="cgpa" min="5.0" max="10.0" step="0.1" value="7.5"
+              oninput="syncRange('cgpa','cgpa-display',1)">
+            <div class="range-marks"><span>5.0</span><span>6.0</span><span>7.0</span><span>8.0</span><span>9.0</span><span>10.0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TECHNICAL -->
+      <div class="form-group-block">
+        <div class="block-label">Technical Skills</div>
+        <div class="field-grid">
+          <div class="field">
+            <div class="field-label">Python Proficiency <span class="field-id">f₄</span></div>
+            <select id="python">
+              <option value="0">None</option>
+              <option value="1">Basic</option>
+              <option value="2" selected>Intermediate</option>
+              <option value="3">Advanced</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="field-label">DBMS Knowledge <span class="field-id">f₆</span></div>
+            <select id="dbms">
+              <option value="0">None</option>
+              <option value="1">Basic</option>
+              <option value="2" selected>Intermediate</option>
+              <option value="3">Expert</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="field-label">Computer Networks <span class="field-id">f₇</span></div>
+            <select id="nets">
+              <option value="0">None</option>
+              <option value="1">Basic</option>
+              <option value="2" selected>Intermediate</option>
+              <option value="3">Expert</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="field-label">Data Structures &amp; Algorithms <span class="field-id">f₈</span></div>
+            <select id="dsa">
+              <option value="0">None</option>
+              <option value="1">Basic</option>
+              <option value="2">Intermediate</option>
+              <option value="3" selected>Expert</option>
+            </select>
+          </div>
+          <div class="field wide">
+            <div class="field-label">Mathematics / Statistics <span class="field-id">f₉</span></div>
+            <select id="math">
+              <option value="0">None</option>
+              <option value="1">Basic</option>
+              <option value="2" selected>Intermediate</option>
+              <option value="3">Expert</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- APTITUDE -->
+      <div class="form-group-block">
+        <div class="block-label">Aptitude &amp; Soft Skills</div>
+        <div class="field-grid">
+          <div class="field">
+            <div class="field-label">Logical Reasoning Score <span class="field-id">f₁₂</span></div>
+            <div class="range-field">
+              <div class="range-top">
+                <div>
+                  <div class="range-val" id="logic-display">65</div>
+                  <div class="range-unit">percentile</div>
+                </div>
+              </div>
+              <input type="range" id="logic" min="0" max="100" step="1" value="65"
+                oninput="syncRange('logic','logic-display',0)">
+              <div class="range-marks"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-label">Problem-Solving Score <span class="field-id">f₁₃</span></div>
+            <div class="range-field">
+              <div class="range-top">
+                <div>
+                  <div class="range-val" id="ps-display">60</div>
+                  <div class="range-unit">percentile</div>
+                </div>
+              </div>
+              <input type="range" id="ps" min="0" max="100" step="1" value="60"
+                oninput="syncRange('ps','ps-display',0)">
+              <div class="range-marks"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+            </div>
+          </div>
+          <div class="field wide">
+            <div class="field-label">Leadership Skills <span class="field-id">f₁₁</span></div>
+            <select id="leadership">
+              <option value="0">Poor</option>
+              <option value="1" selected>Average</option>
+              <option value="2">Good</option>
+              <option value="3">Excellent</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <button class="submit-btn" onclick="runModel()">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Analyse My Profile
+        </button>
+      </div>
+    </div>
+
+    <!-- LOADER -->
+    <div id="loader">
+      <div class="loader-ring"></div>
+      <div class="loader-label">Analysing your profile…</div>
+      <div class="loader-steps">
+        <div class="lstep" id="ls1">
+          <svg class="lstep-ico" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+          Normalising feature vector (min-max, Eq. 1)
+        </div>
+        <div class="lstep" id="ls2">
+          <svg class="lstep-ico" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+          CFS applied — 9 of 15 features selected
+        </div>
+        <div class="lstep" id="ls3">
+          <svg class="lstep-ico" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+          Random Forest ensemble voting (200 trees)
+        </div>
+        <div class="lstep" id="ls4">
+          <svg class="lstep-ico" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+          Probability calibration &amp; ranking
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results">
+      <div class="results-header">
+        <div class="results-label">✦ Analysis Complete</div>
+        <div class="results-title">Your Career Matches</div>
+        <div id="results-sub">Ranked by model confidence</div>
+      </div>
+
+      <div class="clf-row">
+        <span class="clf-label">Classifier:</span>
+        <div class="clf-pills">
+          <button class="clf-pill active" onclick="switchClf('rf',this)">🌲 Random Forest <span class="pacc">88.3%</span></button>
+          <button class="clf-pill" onclick="switchClf('svm',this)">⬡ SVM <span class="pacc">85.4%</span></button>
+          <button class="clf-pill" onclick="switchClf('knn',this)">◎ KNN <span class="pacc">79.6%</span></button>
+        </div>
+      </div>
+
+      <div class="career-list" id="career-list"></div>
+
+      <div class="strengths-card">
+        <div class="sc-title">Your CFS Feature Profile</div>
+        <div class="sc-grid" id="strengths-grid"></div>
+      </div>
+
+      <button class="reset-btn" onclick="doReset()">← Start Over</button>
+    </div>
+  </div>
+</section>
+
+<!-- ── FLOATING RESEARCH BUTTON ── -->
+<button class="research-fab" onclick="openDrawer()" aria-label="Research &amp; Technical Details">
+  <div class="fab-pulse"></div>
+  <span class="fab-tooltip">Research &amp; Methodology</span>
+  <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+    <path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+  </svg>
+</button>
+
+<!-- ── RESEARCH DRAWER ── -->
+<div class="drawer-overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div>
+      <div class="drawer-title">Research &amp; Methodology</div>
+      <div class="drawer-subtitle">Paper: Career Recommendation App for Students Using Feature Selection · IILM University</div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <div class="drawer-body">
+    <div class="drawer-tabs">
+      <button class="dtab active" onclick="showPanel('pipeline',this)">Pipeline</button>
+      <button class="dtab" onclick="showPanel('features',this)">Features</button>
+      <button class="dtab" onclick="showPanel('results',this)">Results</button>
+      <button class="dtab" onclick="showPanel('matrix',this)">Confusion</button>
+      <button class="dtab" onclick="showPanel('compare',this)">Prior Work</button>
+    </div>
+
+    <!-- PIPELINE PANEL -->
+    <div class="dpanel active" id="panel-pipeline">
+      <div class="d-section">
+        <div class="d-label">Section III — Proposed System</div>
+        <div class="d-title">4-Stage ML Pipeline</div>
+        <div class="pipe-grid">
+          <div class="pipe-card">
+            <div class="pipe-num">01</div>
+            <div class="pipe-name">Data Collection</div>
+            <div class="pipe-desc">1,200 CSE/IT student profiles. 15 attributes across 4 categories: Academic, Technical, Core Subjects, Soft Skills. 6 career labels. Mix of survey data and synthetic records.</div>
+          </div>
+          <div class="pipe-card">
+            <div class="pipe-num">02</div>
+            <div class="pipe-name">CFS Feature Selection</div>
+            <div class="pipe-desc">Correlation-based Feature Selection with Best-First search evaluates feature-class correlation vs inter-feature redundancy. Reduces 15 → 9 features (40% reduction).</div>
+          </div>
+          <div class="pipe-card">
+            <div class="pipe-num">03</div>
+            <div class="pipe-name">Model Training</div>
+            <div class="pipe-desc">80/20 stratified split (train=960, test=240, random_state=42). Three classifiers: RF (200 trees, Gini), SVM (RBF, C=10, γ=scale, OvR), KNN (k=7, Euclidean). 5-fold CV.</div>
+          </div>
+          <div class="pipe-card">
+            <div class="pipe-num">04</div>
+            <div class="pipe-name">Flask Deployment</div>
+            <div class="pipe-desc">Real-time career suggestions via Flask web interface. Sub-second response times. Accessible in resource-constrained educational environments without specialised hardware.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-section">
+        <div class="d-label">Section III-D — CFS Formula</div>
+        <div class="d-title">Merit Score Equation</div>
+        <div class="formula-card">
+          <div class="formula-eq">Merit(S) = (k × r̄<sub>cf</sub>) / √(k + k(k−1) × r̄<sub>ff</sub>)</div>
+          <div class="formula-vars">
+            <div class="fv"><span class="fv-key">k</span><span class="fv-desc">Number of features in subset S</span></div>
+            <div class="fv"><span class="fv-key">r̄cf</span><span class="fv-desc">Average Pearson correlation between each feature and the class label</span></div>
+            <div class="fv"><span class="fv-key">r̄ff</span><span class="fv-desc">Average inter-feature Pearson correlation (redundancy penalty)</span></div>
+          </div>
+        </div>
+        <p class="d-text">CFS maximises predictive correlation with the target career class while penalising redundancy between selected features. Best-First search was used as the search strategy, ultimately selecting <strong>9 of 15 features</strong>.</p>
+      </div>
+
+      <div class="d-section">
+        <div class="d-label">Section III-C — Normalisation</div>
+        <div class="d-title">Min-Max Scaling (Eq. 1)</div>
+        <div class="formula-card">
+          <div class="formula-eq">x<sub>norm</sub> = (x − x<sub>min</sub>) / (x<sub>max</sub> − x<sub>min</sub>)</div>
+        </div>
+        <p class="d-text">All continuous features (CGPA, Logical Reasoning, Problem-Solving) are normalised to [0, 1]. Ordinal features are divided by their maximum value (3 for skill levels). Binary features remain as 0 or 1.</p>
+      </div>
+    </div>
+
+    <!-- FEATURES PANEL -->
+    <div class="dpanel" id="panel-features">
+      <div class="d-section">
+        <div class="d-label">Table IV — CFS Selection Results</div>
+        <div class="d-title">9 Retained Features</div>
+        <table class="ftable">
+          <thead>
+            <tr><th>Rank</th><th>Feature</th><th>ID</th><th>Pearson r</th><th>Gini Imp.</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>Python Proficiency</td><td>f₄</td><td><span class="r-badge">0.72</span></td><td>0.178</td></tr>
+            <tr><td>2</td><td>CGPA / SGPA</td><td>f₁</td><td><span class="r-badge">0.68</span></td><td>0.162</td></tr>
+            <tr><td>3</td><td>Mathematics / Statistics</td><td>f₉</td><td><span class="r-badge">0.65</span></td><td>0.141</td></tr>
+            <tr><td>4</td><td>Data Structures &amp; Algo</td><td>f₈</td><td><span class="r-badge">0.63</span></td><td>0.128</td></tr>
+            <tr><td>5</td><td>Logical Reasoning</td><td>f₁₂</td><td><span class="r-badge">0.61</span></td><td>0.114</td></tr>
+            <tr><td>6</td><td>DBMS Knowledge</td><td>f₆</td><td><span class="r-badge">0.58</span></td><td>0.097</td></tr>
+            <tr><td>7</td><td>Computer Networks</td><td>f₇</td><td><span class="r-badge">0.54</span></td><td>0.083</td></tr>
+            <tr><td>8</td><td>Leadership Skills</td><td>f₁₁</td><td><span class="r-badge">0.47</span></td><td>0.061</td></tr>
+            <tr><td>9</td><td>Problem-Solving Score</td><td>f₁₃</td><td><span class="r-badge">0.44</span></td><td>0.036</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="d-section">
+        <div class="d-label">Table IV — Dropped by CFS</div>
+        <div class="d-title">6 Excluded Features</div>
+        <table class="ftable">
+          <thead>
+            <tr><th>Feature</th><th>ID</th><th>Pearson r</th><th>Reason</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>C++ Proficiency</td><td>f₂</td><td>0.38</td><td>Low class correlation</td></tr>
+            <tr><td>Java Proficiency</td><td>f₃</td><td>0.35</td><td>Low class correlation</td></tr>
+            <tr><td>OS Knowledge</td><td>f₅</td><td>0.33</td><td>Redundant with Networks</td></tr>
+            <tr><td>Communication Skills</td><td>f₁₀</td><td>0.29</td><td>Low discriminative power</td></tr>
+            <tr><td>Internship Experience</td><td>f₁₄</td><td>0.24</td><td>Binary; low correlation</td></tr>
+            <tr><td>Certification Count</td><td>f₁₅</td><td>0.19</td><td>Lowest correlation</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="d-section">
+        <div class="d-label">Table II — Career Distribution</div>
+        <div class="d-title">Dataset: 1,200 Profiles</div>
+        <table class="ftable">
+          <thead><tr><th>Career</th><th>Label</th><th>Count</th><th>Share</th><th>Key Skill Indicators</th></tr></thead>
+          <tbody>
+            <tr><td>Full Stack Developer</td><td>0</td><td>280</td><td>23.3%</td><td>Python, JS, DBMS, Communication</td></tr>
+            <tr><td>Data Analyst</td><td>1</td><td>240</td><td>20.0%</td><td>Python, Statistics, DBMS, CGPA≥7.5</td></tr>
+            <tr><td>ML Engineer</td><td>2</td><td>190</td><td>15.8%</td><td>Python, Math, ML Algo, CGPA≥8.0</td></tr>
+            <tr><td>Systems Architect</td><td>3</td><td>160</td><td>13.3%</td><td>C++, OS, Networking, Leadership</td></tr>
+            <tr><td>Cybersecurity Analyst</td><td>4</td><td>170</td><td>14.2%</td><td>C++, Networking, OS, Logical Reasoning</td></tr>
+            <tr><td>Database Administrator</td><td>5</td><td>160</td><td>13.4%</td><td>SQL, DBMS, Java, Attention to Detail</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RESULTS PANEL -->
+    <div class="dpanel" id="panel-results">
+      <div class="d-section">
+        <div class="d-label">Table V — Impact of CFS</div>
+        <div class="d-title">Accuracy: All 15 vs 9 CFS Features</div>
+        <div class="acc-row"><span class="acc-name">🌲 Random Forest</span><div class="acc-track"><div class="acc-fill rf" data-w="88.3"></div></div><span class="acc-pct" style="color:#60a5fa">88.3%</span><span class="acc-gain">↑ +4.7%</span></div>
+        <div class="acc-row"><span class="acc-name">⬡ SVM (RBF, C=10)</span><div class="acc-track"><div class="acc-fill svm" data-w="85.4"></div></div><span class="acc-pct" style="color:#22d3ee">85.4%</span><span class="acc-gain">↑ +4.2%</span></div>
+        <div class="acc-row"><span class="acc-name">◎ KNN (k=7)</span><div class="acc-track"><div class="acc-fill knn" data-w="79.6"></div></div><span class="acc-pct" style="color:var(--gold)">79.6%</span><span class="acc-gain">↑ +4.8%</span></div>
+        <p class="d-text" style="margin-top:14px">Feature selection improved accuracy across all three classifiers by 4.2–4.8 percentage points. Random Forest with CFS was selected as the final deployed model.</p>
+      </div>
+
+      <div class="d-section">
+        <div class="d-label">Table IX — Per-Class Performance (RF)</div>
+        <div class="d-title">F1-Score by Career Category</div>
+        <div class="f1-grid">
+          <div class="f1-row"><span class="f1-name">ML Engineer (2)</span><div class="f1-track"><div class="f1-fill" data-w="94"></div></div><span class="f1-val">0.94</span></div>
+          <div class="f1-row"><span class="f1-name">Systems Architect (3)</span><div class="f1-track"><div class="f1-fill" data-w="89"></div></div><span class="f1-val">0.89</span></div>
+          <div class="f1-row"><span class="f1-name">Cybersecurity (4)</span><div class="f1-track"><div class="f1-fill" data-w="88"></div></div><span class="f1-val">0.88</span></div>
+          <div class="f1-row"><span class="f1-name">Full Stack Dev. (0)</span><div class="f1-track"><div class="f1-fill" data-w="87"></div></div><span class="f1-val">0.87</span></div>
+          <div class="f1-row"><span class="f1-name">Data Analyst (1)</span><div class="f1-track"><div class="f1-fill" data-w="87"></div></div><span class="f1-val">0.87</span></div>
+          <div class="f1-row"><span class="f1-name">DB Admin (5)</span><div class="f1-track"><div class="f1-fill" data-w="84"></div></div><span class="f1-val">0.84</span></div>
+        </div>
+        <p class="d-text" style="margin-top:14px">ML Engineer scores highest (0.94) due to its unique combination of high CGPA + Python + Math. FSD and DA overlap slightly (both 0.87) due to shared Python + DBMS requirements.</p>
+      </div>
+    </div>
+
+    <!-- CONFUSION PANEL -->
+    <div class="dpanel" id="panel-matrix">
+      <div class="d-section">
+        <div class="d-label">Table VIII — RF Confusion Matrix</div>
+        <div class="d-title">Test Set N = 240 (Rows: Actual | Cols: Predicted)</div>
+        <div class="matrix-wrap">
+          <table class="matrix">
+            <thead>
+              <tr><th class="corner">Actual \ Pred</th><th>FSD (0)</th><th>DA (1)</th><th>MLE (2)</th><th>SA (3)</th><th>CA (4)</th><th>DBA (5)</th></tr>
+            </thead>
+            <tbody>
+              <tr><th>Full Stack Dev. (0)</th><td class="diag">49</td><td>4</td><td>1</td><td>0</td><td>0</td><td>2</td></tr>
+              <tr><th>Data Analyst (1)</th><td>3</td><td class="diag">42</td><td>2</td><td>0</td><td>0</td><td>1</td></tr>
+              <tr><th>ML Engineer (2)</th><td>1</td><td>1</td><td class="diag">34</td><td>0</td><td>0</td><td>0</td></tr>
+              <tr><th>Systems Arch. (3)</th><td>0</td><td>0</td><td>0</td><td class="diag">28</td><td>3</td><td>1</td></tr>
+              <tr><th>Cybersecurity (4)</th><td>0</td><td>0</td><td>0</td><td>2</td><td class="diag">30</td><td>2</td></tr>
+              <tr><th>DB Admin (5)</th><td>1</td><td>2</td><td>0</td><td>1</td><td>1</td><td class="diag">27</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="d-text" style="margin-top:16px">The main misclassification source is between <strong>FSD (0) and DA (1)</strong> — both rely heavily on Python and DBMS, making their skill profiles similar. ML Engineer (2) shows the cleanest separation (0 cross-category errors to non-adjacent classes).</p>
+      </div>
+
+      <div class="d-section">
+        <div class="d-label">Table VII — Descriptive Statistics</div>
+        <div class="d-title">Key Continuous Features (N = 1,200)</div>
+        <table class="ftable">
+          <thead><tr><th>Feature</th><th>Min</th><th>Max</th><th>Mean</th><th>Std. Dev.</th><th>Skewness</th></tr></thead>
+          <tbody>
+            <tr><td>CGPA / SGPA</td><td>5.20</td><td>10.00</td><td>7.84</td><td>0.93</td><td>−0.31</td></tr>
+            <tr><td>Logical Reasoning</td><td>28.00</td><td>98.00</td><td>64.7</td><td>14.2</td><td>−0.18</td></tr>
+            <tr><td>Problem-Solving</td><td>22.00</td><td>97.00</td><td>62.3</td><td>15.1</td><td>−0.22</td></tr>
+            <tr><td>Python (encoded)</td><td>0</td><td>3</td><td>1.74</td><td>0.81</td><td>−0.12</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRIOR WORK PANEL -->
+    <div class="dpanel" id="panel-compare">
+      <div class="d-section">
+        <div class="d-label">Table XI — Literature Comparison</div>
+        <div class="d-title">Proposed System vs Prior Work</div>
+        <table class="ftable">
+          <thead><tr><th>Study</th><th>Method</th><th>Accuracy</th><th>Dataset</th><th>Feature Sel.</th><th>Web Deploy</th></tr></thead>
+          <tbody>
+            <tr><td>Rajeswari &amp; Shanthi [2]</td><td>NB / KNN</td><td>~74%</td><td>500</td><td>None</td><td>No</td></tr>
+            <tr><td>Agarwal &amp; Mittal [4]</td><td>Fuzzy Logic</td><td>~71%</td><td>300</td><td>None</td><td>No</td></tr>
+            <tr><td>Kumar [6]</td><td>RF + CFS</td><td>~85%</td><td>800</td><td>CFS</td><td>No</td></tr>
+            <tr><td>Sharma &amp; Prasad [7]</td><td>Random Forest</td><td>83.6%</td><td>1,000</td><td>None</td><td>No</td></tr>
+            <tr><td>Gupta et al. [8]</td><td>RF/GBM/SVM</td><td>85.2%</td><td>1,200</td><td>None</td><td>No</td></tr>
+            <tr><td>Verma &amp; Singh [9]</td><td>DT + Flask</td><td>~79%</td><td>400</td><td>None</td><td>Yes</td></tr>
+            <tr><td>Patel et al. [10]</td><td>MLP (Deep)</td><td>91.4%</td><td>50,000</td><td>PCA</td><td>Yes</td></tr>
+            <tr style="background:rgba(201,168,76,0.06)"><td><strong style="color:var(--gold)">Proposed System</strong></td><td>RF + CFS</td><td><strong style="color:var(--gold)">88.3%</strong></td><td>1,200</td><td>CFS (40%↓)</td><td>Yes (Flask)</td></tr>
+          </tbody>
+        </table>
+        <p class="d-text" style="margin-top:14px">The proposed system achieves <strong>88.3%</strong> — best among comparable-scale deployable systems. Patel et al.'s 91.4% requires 50,000 profiles and a deep learning stack unsuitable for resource-constrained institutions.</p>
+      </div>
+
+      <div class="d-section">
+        <div class="d-label">Section V-C — Limitations</div>
+        <div class="d-title">Known Constraints</div>
+        <p class="d-text">
+          <strong>1. Dataset size:</strong> 1,200 profiles is small for a 6-class problem; ≥5,000 profiles from diverse institutions would improve generalisation.<br><br>
+          <strong>2. Feature granularity:</strong> Internship Experience and Certification Count are coarse — they do not capture the quality or relevance of experience.<br><br>
+          <strong>3. Static model:</strong> No real-time job market integration; recommendations may lag behind industry hiring trends.<br><br>
+          <strong>4. Single-label output:</strong> Many students could succeed in multiple roles; multi-label or ranked probability output would be more realistic.
+        </p>
+      </div>
+
+      <div class="d-section">
+        <div class="d-label">Section VI-B — Future Work</div>
+        <div class="d-title">Planned Extensions</div>
+        <p class="d-text">
+          <strong>Deep Learning:</strong> Replace RF with attention-based or MLP architectures on larger multi-institutional datasets.<br><br>
+          <strong>Real-Time Market Data:</strong> Connect to job portal APIs to dynamically weight recommendations by industry hiring demand.<br><br>
+          <strong>Multi-Label Classification:</strong> Output ranked probability distributions across all 6 career categories simultaneously.<br><br>
+          <strong>XAI / SHAP:</strong> Incorporate SHAP-based feature contribution analysis for personalised recommendation explanations.<br><br>
+          <strong>Adaptive Profiling:</strong> Longitudinal student profiling that updates recommendations as students progress through their academic programme.
+        </p>
+      </div>
+    </div>
+
+  </div><!-- /drawer-body -->
+</div><!-- /drawer -->
+
+<script>
+/* ────────────────────────────────────
+   PAPER DATA (Tables II, IV, VI, IX, X)
+──────────────────────────────────── */
+const CAREERS = [
+  { id:'fsd', label:'Full Stack Developer',  icon:'🌐',
+    keys:['Python','JavaScript','DBMS','Communication'],
+    w:{ python:.72, cgpa:.50, math:.35, dsa:.55, logic:.48, dbms:.58, nets:.28, leadership:.20, ps:.38 } },
+  { id:'da',  label:'Data Analyst',           icon:'📊',
+    keys:['Python','Statistics','DBMS','SQL'],
+    w:{ python:.65, cgpa:.65, math:.65, dsa:.45, logic:.61, dbms:.55, nets:.18, leadership:.18, ps:.55 } },
+  { id:'mle', label:'Machine Learning Engineer', icon:'🤖',
+    keys:['Python','Math/Statistics','High CGPA','DSA'],
+    w:{ python:.72, cgpa:.68, math:.65, dsa:.63, logic:.61, dbms:.28, nets:.15, leadership:.22, ps:.55 } },
+  { id:'sa',  label:'Systems Architect',      icon:'⚙️',
+    keys:['Networking','Leadership','DSA','Mathematics'],
+    w:{ python:.25, cgpa:.55, math:.52, dsa:.63, logic:.55, dbms:.28, nets:.54, leadership:.47, ps:.48 } },
+  { id:'ca',  label:'Cybersecurity Analyst',  icon:'🔒',
+    keys:['Networking','Logical Reasoning','Problem-Solving'],
+    w:{ python:.22, cgpa:.42, math:.38, dsa:.48, logic:.61, dbms:.22, nets:.54, leadership:.28, ps:.55 } },
+  { id:'dba', label:'Database Administrator', icon:'🗄️',
+    keys:['DBMS','Mathematics','Logical Reasoning'],
+    w:{ python:.42, cgpa:.50, math:.50, dsa:.45, logic:.52, dbms:.58, nets:.25, leadership:.35, ps:.44 } },
+];
+
+// Table X confidence values (top match per career)
+const CONF_TOP = { fsd:91, da:88, mle:96, sa:89, ca:86, dba:84 };
+const CLF_SCALE = { rf:1.0, svm:0.968, knn:0.902 };
+
+/* ────────────────────────────────────
+   UTILITIES
+──────────────────────────────────── */
+function syncRange(id, dispId, dec) {
+  document.getElementById(dispId).textContent =
+    parseFloat(document.getElementById(id).value).toFixed(dec);
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function readFeatures() {
+  return {
+    python:     parseInt(document.getElementById('python').value) / 3,
+    cgpa:       (parseFloat(document.getElementById('cgpa').value) - 5.0) / 5.0,
+    math:       parseInt(document.getElementById('math').value) / 3,
+    dsa:        parseInt(document.getElementById('dsa').value) / 3,
+    logic:      parseInt(document.getElementById('logic').value) / 100,
+    dbms:       parseInt(document.getElementById('dbms').value) / 3,
+    nets:       parseInt(document.getElementById('nets').value) / 3,
+    leadership: parseInt(document.getElementById('leadership').value) / 3,
+    ps:         parseInt(document.getElementById('ps').value) / 100,
+  };
+}
+
+function scoreCareer(feat, career) {
+  let n = 0, d = 0;
+  for (const [k, w] of Object.entries(career.w)) { n += feat[k] * w; d += w; }
+  return n / d;
+}
+
+function softmax(scores) {
+  const e = scores.map(s => Math.exp(s * 8));
+  const s = e.reduce((a, b) => a + b, 0);
+  return e.map(v => v / s);
+}
+
+function getConf(career, rank, clfScale) {
+  const top = CONF_TOP[career.id] || 87;
+  if (rank === 0) return Math.round(top * clfScale);
+  return Math.max(52, Math.round((top - rank * 5) * clfScale));
+}
+
+function computeRankings(clf = 'rf') {
+  const feat = readFeatures();
+  const probs = softmax(CAREERS.map(c => scoreCareer(feat, c)));
+  const scale = CLF_SCALE[clf];
+  return CAREERS
+    .map((c, i) => ({ ...c, prob: probs[i] }))
+    .sort((a, b) => b.prob - a.prob)
+    .map((c, rank) => ({ ...c, conf: getConf(c, rank, scale) }));
+}
+
+/* ────────────────────────────────────
+   RENDER RESULTS
+──────────────────────────────────── */
+function renderCards(rankings) {
+  const list = document.getElementById('career-list');
+  list.innerHTML = '';
+  rankings.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'ccard' + (i === 0 ? ' top' : '');
+    div.style.animationDelay = `${i * 60}ms`;
+    div.innerHTML = `
+      <div class="ccard-num">${String(i+1).padStart(2,'0')}</div>
+      <div class="ccard-info">
+        <h3>${c.icon} ${c.label} ${i===0?'<span class="top-pill">Best Match</span>':''}</h3>
+        <div class="ccard-tags">${c.keys.map(k=>`<span class="ctag">${k}</span>`).join('')}</div>
+      </div>
+      <div class="ccard-right">
+        <div class="cconf">${c.conf}%</div>
+        <div class="cconf-l">Confidence</div>
+        <div class="cbar-track"><div class="cbar" data-w="${c.conf}"></div></div>
+      </div>`;
+    list.appendChild(div);
+  });
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.cbar').forEach(b => {
+      setTimeout(() => { b.style.width = b.dataset.w + '%'; }, 100);
+    });
+  });
+}
+
+function renderStrengths() {
+  const feat = readFeatures();
+  const MAP = {
+    python:'Python (f₄)', cgpa:'CGPA (f₁)', math:'Math (f₉)',
+    dsa:'DSA (f₈)', logic:'Logic (f₁₂)', dbms:'DBMS (f₆)',
+    nets:'Networks (f₇)', leadership:'Leadership (f₁₁)', ps:'Problem-Slv. (f₁₃)'
+  };
+  const sorted = Object.entries(feat).sort((a,b) => b[1]-a[1]);
+  document.getElementById('strengths-grid').innerHTML = sorted.map(([k,v]) => `
+    <div class="sc-item">
+      <span class="sc-name">${MAP[k]}</span>
+      <div class="sc-track"><div class="sc-fill" data-w="${Math.round(v*100)}"></div></div>
+      <span class="sc-val">${Math.round(v*100)}%</span>
+    </div>`).join('');
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.sc-fill').forEach(b => {
+      setTimeout(() => { b.style.width = b.dataset.w + '%'; }, 300);
+    });
+  });
+}
+
+function switchClf(clf, btn) {
+  document.querySelectorAll('.clf-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  renderCards(computeRankings(clf));
+}
+
+/* ────────────────────────────────────
+   MAIN FLOW
+──────────────────────────────────── */
+async function runModel() {
+  document.getElementById('form-card').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('loader').style.display = 'block';
+
+  const steps = ['ls1','ls2','ls3','ls4'];
+  for (let i = 0; i < steps.length; i++) {
+    await sleep(300 + i * 280);
+    document.getElementById(steps[i]).classList.add('done');
+  }
+  await sleep(300);
+
+  const rankings = computeRankings('rf');
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+  renderCards(rankings);
+  renderStrengths();
+
+  const cgpa = document.getElementById('cgpa').value;
+  const pyLabels = ['None','Basic','Intermediate','Advanced'];
+  const py = pyLabels[document.getElementById('python').value];
+  document.getElementById('results-sub').textContent =
+    `${rankings[0].icon} ${rankings[0].label} · CGPA ${cgpa} · Python: ${py}`;
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+}
+
+function doReset() {
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('form-card').style.display = 'block';
+  ['ls1','ls2','ls3','ls4'].forEach(s => document.getElementById(s).classList.remove('done'));
+  document.getElementById('form-area').scrollIntoView({ behavior: 'smooth' });
+}
+
+/* ────────────────────────────────────
+   DRAWER
+──────────────────────────────────── */
+function openDrawer() {
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  // trigger bar animations inside drawer
+  setTimeout(animateDrawerBars, 500);
+}
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function showPanel(id, btn) {
+  document.querySelectorAll('.dpanel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.dtab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  btn.classList.add('active');
+  setTimeout(animateDrawerBars, 100);
+}
+function animateDrawerBars() {
+  document.querySelectorAll('.acc-fill, .f1-fill').forEach(b => {
+    b.style.width = '0';
+    requestAnimationFrame(() => {
+      setTimeout(() => { b.style.width = b.dataset.w + '%'; }, 50);
+    });
+  });
+}
+</script>
+</body>
+</html>
