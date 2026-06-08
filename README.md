@@ -89,7 +89,7 @@ Contributed to system development, recommendation methodology, testing, result a
 * Mobile Application Development
 * Advanced Deep Learning Models
 
-## Author
+## co-Author
 
 Arnab Roy
 
