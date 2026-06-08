@@ -1,25 +1,40 @@
-# CareerIQ - Career Recommendation System
+# CareerIQ - AI Powered Career Recommendation System
 
-CareerIQ is a research-inspired career recommendation web application that helps students identify suitable technology career paths based on their academic performance, technical skills, aptitude, and leadership abilities.
+CareerIQ is a machine learning based career recommendation system designed to help students identify suitable technology career paths based on academic performance, technical skills, aptitude, and professional competencies. The project combines feature selection techniques with data-driven recommendation methodologies to provide personalized career guidance.
 
 ## Live Demo
 
-Add your GitHub Pages link here
+https://arnabroy28.github.io/CareerIQ/
 
 ## Features
 
-* Career recommendations across six technology domains
+* Personalized career recommendations across six technology domains
+* Data-driven recommendation engine
+* Feature selection based recommendation methodology
 * Interactive and responsive user interface
-* Research-based recommendation methodology
-* Detailed visualization of career matches
-* Modern UI and user experience
+* Research-backed system design
+* Real-time recommendation generation
 * GitHub Pages deployment
 
 ## Technology Stack
 
+### Frontend
+
 * HTML5
 * CSS3
 * JavaScript
+
+### Machine Learning
+
+* Python
+* Scikit-learn
+* Pandas
+* NumPy
+* Random Forest Classifier
+* Feature Selection Techniques
+
+### Deployment
+
 * GitHub Pages
 
 ## Career Categories
@@ -31,23 +46,56 @@ Add your GitHub Pages link here
 * Cybersecurity Analyst
 * Database Administrator
 
-## Research Contribution
+## Dataset Overview
+
+* 1,200 Student Profiles
+* 15 Input Features
+* 6 Career Categories
+* Academic, Technical, Aptitude, and Soft Skill Attributes
+
+## Methodology
+
+1. Data Collection and Preprocessing
+2. Feature Selection
+3. Career Prediction using Random Forest Classification
+4. Recommendation Generation
+5. Web-Based Deployment
+
+## Research Publication
 
 This project is based on the research paper:
 
-Career Recommendation App for Students Using Feature Selection
+**Career Recommendation App for Students Using Feature Selection**
 
-Co Author: Arnab Roy
+### Publication Status
 
-Accepted by IRE Journals
+Accepted for publication in IRE Journals
 
-Publication Pending
+### Research Area
 
-## Future Improvements
+Artificial Intelligence, Educational Data Mining, and Career Recommendation Systems
 
-* Real Machine Learning Model Integration
-* Flask Backend Implementation
-* User Authentication
-* Database Support
-* Personalized Learning Recommendations
+### Author Contribution
 
+Contributed to system development, recommendation methodology, testing, result analysis, and manuscript preparation.
+
+## Future Enhancements
+
+* Flask Backend Integration
+* Explainable AI (XAI) Support
+* Multi-Career Ranking Recommendations
+* Real-Time Job Market Integration
+* Personalized Learning Path Suggestions
+* Mobile Application Development
+* Advanced Deep Learning Models
+
+## Author
+
+Arnab Roy
+
+B.Tech Computer Science Engineering
+IILM University
+
+GitHub: https://github.com/ArnabRoy28
+
+LinkedIn: https://linkedin.com/in/arnab-roy-601b02220
