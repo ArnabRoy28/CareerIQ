@@ -1,4 +1,4 @@
-# CareerIQ - AI Powered Career Recommendation System
+# CareerIQ - AI Powered Career Recommendation System 🚀
 
 CareerIQ is a machine learning based career recommendation system designed to help students identify suitable technology career paths based on academic performance, technical skills, aptitude, and professional competencies. The project combines feature selection techniques with data-driven recommendation methodologies to provide personalized career guidance.
 
